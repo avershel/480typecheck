@@ -64,7 +64,6 @@ public class TypeCheck extends StaticAnalysis
     public void checkReturnTypes(ASTFunction node)
     {
     	int i = 0;
-    	checkReturnTypes(node);
     	
     	if(node.returnType == ASTNode.DataType.VOID)
     	{
@@ -140,6 +139,8 @@ public class TypeCheck extends StaticAnalysis
      */
     public ASTNode.DataType getType(ASTBinaryExpr ex)
     {
+    	System.out.println("getting type of -------->" + ex.toString());
+
     	if (getType(((ASTBinaryExpr)ex).leftChild) != getType(((ASTBinaryExpr)ex).rightChild))
     	{
     		addError("Values must be of same type " + ex.getSourceInfo().toString());
@@ -160,6 +161,8 @@ public class TypeCheck extends StaticAnalysis
      
     public ASTNode.DataType getType(ASTExpression ex)
     {
+    	System.out.println("getting type of -------->" + ex.toString());
+
     	if(ex instanceof ASTBinaryExpr)
     	{
     		return getType((ASTBinaryExpr) ex);
@@ -208,8 +211,9 @@ public class TypeCheck extends StaticAnalysis
     	}
     }
   
-    public void postvisit(ASTFunction node)
+    public void postVisit(ASTFunction node)
     {
+    	System.out.println("visitng function");
     	try 
     	{
     		lookupSymbol(node, node.name);
@@ -221,8 +225,10 @@ public class TypeCheck extends StaticAnalysis
     	checkReturnTypes(node);
     }
     
-    public void postvisit(ASTAssignment node)
+    public void postVisit(ASTAssignment node)
     {
+    	System.out.println("visitng assignment");
+
     	ASTLocation loc = node.location;
     	ASTExpression ex = node.value;
     	if(getType(loc) != getType(ex))
@@ -236,6 +242,8 @@ public class TypeCheck extends StaticAnalysis
      */
     public void postVisit(ASTConditional node)
     {
+    	System.out.println("visitng conditional");
+
     	if (getType(node.condition) != ASTNode.DataType.BOOL)
     	{
     		addError("Condtionals must test for boolean values " + node.condition.getSourceInfo().toString());
@@ -251,6 +259,7 @@ public class TypeCheck extends StaticAnalysis
     }
 
     public ASTNode.DataType getType(ASTLocation node) {
+
     	try {
     		if(node.hasIndex())
     		{
@@ -299,11 +308,46 @@ public class TypeCheck extends StaticAnalysis
     }
 
     public ASTNode.DataType getType(ASTFunctionCall node) {
+    	System.out.println("FUNCTION CALL = " + node.toString());
     	try {
     		return lookupSymbol(node, node.name).type;
     	} catch (InvalidProgramException e) {
     		addError("Method not found:  " + node.name);
     		return null;
     	}
+    }
+    
+    public void postVisit(ASTBreak node)
+    {
+    	if (node.getParent() != null)
+    	{
+    		if(node.getParent() instanceof ASTBlock)
+    		{
+    			ASTNode b = node.getParent();
+    	    	if (b.getParent() != null)
+    	    	{
+    	    		if(node.getParent() instanceof ASTWhileLoop)
+    	    		{
+    	    			
+    	    		}
+    	    		else
+    	    		{
+    	    			addError("invalid break statement outside whileloop");
+    	    		}
+    	    	}
+	    		else
+	    		{
+	    			addError("invalid break statement outside whileloop");
+	    		}
+    		}
+    		else
+    		{
+    			addError("invalid break statement outside whileloop");
+    		}
+    	}
+		else
+		{
+			addError("invalid break statement outside whileloop");
+		}
     }
 }
