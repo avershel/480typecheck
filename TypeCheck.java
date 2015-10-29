@@ -195,7 +195,7 @@ public class TypeCheck extends StaticAnalysis
     
     public boolean mathOp(ASTBinaryExpr.BinOp b)
     {
-    	return ((b == ASTBinaryExpr.BinOp.AND) || (b == ASTBinaryExpr.BinOp.DIV) || (b == ASTBinaryExpr.BinOp.MOD)
+    	return ((b == ASTBinaryExpr.BinOp.ADD) || (b == ASTBinaryExpr.BinOp.DIV) || (b == ASTBinaryExpr.BinOp.MOD)
     			|| (b == ASTBinaryExpr.BinOp.MUL) || (b == ASTBinaryExpr.BinOp.SUB));
     }
 
