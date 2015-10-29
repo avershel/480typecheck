@@ -20,13 +20,21 @@ public class TypeCheck extends StaticAnalysis
      * @param b is binary operator
      * @return true if is boolean operator
      */
-    public boolean boolOp(ASTBinaryExpr.BinOp b)
-    {
-    	return ((b == ASTBinaryExpr.BinOp.AND) || (b == ASTBinaryExpr.BinOp.OR) || (b == ASTBinaryExpr.BinOp.EQ)
-    			|| (b == ASTBinaryExpr.BinOp.GE) || (b == ASTBinaryExpr.BinOp.GT) || (b == ASTBinaryExpr.BinOp.LE)
-    			|| (b == ASTBinaryExpr.BinOp.LT) || (b == ASTBinaryExpr.BinOp.NE));
-    }
-    
+	public boolean boolOp(ASTBinaryExpr.BinOp b)
+	{
+		return ((b == ASTBinaryExpr.BinOp.AND) || (b == ASTBinaryExpr.BinOp.OR));
+	}
+
+	public boolean eqOp(ASTBinaryExpr.BinOp b)
+	{
+		return ((b == ASTBinaryExpr.BinOp.EQ) || (b == ASTBinaryExpr.BinOp.NE));
+	}
+
+	public boolean relOp(ASTBinaryExpr.BinOp b)
+	{
+		return ((b == ASTBinaryExpr.BinOp.GE) || (b == ASTBinaryExpr.BinOp.GT) || (b == ASTBinaryExpr.BinOp.LE)
+				|| (b == ASTBinaryExpr.BinOp.LT));
+	}
     /**
      * Checks for main function in program. If main function exists
      * than checks it adheres to decaf rules.
@@ -139,16 +147,16 @@ public class TypeCheck extends StaticAnalysis
      */
     public ASTNode.DataType getType(ASTBinaryExpr ex)
     {
-    	System.out.println("In get type for binEx" + ex.toString());
+    	// expression are not of same type
     	if (getType(((ASTBinaryExpr)ex).leftChild) != getType(((ASTBinaryExpr)ex).rightChild))
     	{
-    		System.out.println("leftChild: " + (getType(((ASTBinaryExpr)ex).leftChild)).toString());
-    		System.out.println("leftChild: " + (getType(((ASTBinaryExpr)ex).rightChild)).toString());
     		addError("Values must be of same type " + ex.getSourceInfo().toString());
     	}
+    	// operators && or || can only act on boolean types
     	else if (boolOp(((ASTBinaryExpr)ex).operator))
     	{
     		return ASTNode.DataType.BOOL;
+    	// arithmetic operations can only act on int types
     	} else if (mathOp(((ASTBinaryExpr)ex).operator))
     	{
     		if ((getType(((ASTBinaryExpr)ex).leftChild) == ASTNode.DataType.INT)
@@ -156,10 +164,26 @@ public class TypeCheck extends StaticAnalysis
     		{
     			return ASTNode.DataType.INT;
     		}
+    	// relational operations can only act on int types
+    	} else if (relOp(((ASTBinaryExpr)ex).operator))
+    	{
+    		if ((getType(((ASTBinaryExpr)ex).leftChild) == ASTNode.DataType.INT)
+    				&& (getType(((ASTBinaryExpr)ex).rightChild) == ASTNode.DataType.INT))
+    		{
+    			return ASTNode.DataType.BOOL;
+    		}
+    	// equality operations can only act on expression of the same type
+    	} else if (eqOp(((ASTBinaryExpr)ex).operator))
+    	{
+    		if ((getType(((ASTBinaryExpr)ex).leftChild) ==  (getType(((ASTBinaryExpr)ex).rightChild))))
+    		{
+    			return ASTNode.DataType.BOOL;
+    		}
+
     	}
     	return null;
     }
-     
+    
     public ASTNode.DataType getType(ASTExpression ex)
     {
     	if(ex instanceof ASTBinaryExpr)
