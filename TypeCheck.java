@@ -173,6 +173,7 @@ public class TypeCheck extends StaticAnalysis
     
     public ASTNode.DataType getType(ASTExpression ex)
     {
+
     	if(ex instanceof ASTBinaryExpr)
     	{
     		return getType((ASTBinaryExpr) ex);
@@ -182,6 +183,7 @@ public class TypeCheck extends StaticAnalysis
 
     	}else if(ex instanceof ASTFunctionCall)
     	{
+
     		return getType((ASTFunctionCall) ex);
 
     	}else if(ex instanceof ASTLocation)
@@ -205,13 +207,25 @@ public class TypeCheck extends StaticAnalysis
     			|| (b == ASTBinaryExpr.BinOp.MUL) || (b == ASTBinaryExpr.BinOp.SUB));
     }
 
+    public void postVisit(ASTVoidFunctionCall node)
+    {
+    	for (ASTFunction f : funcs)
+    	{
+    		if (f.name.equals(node.name))
+    		{
+    			checkParams(node.name, node.arguments);
+    			return;
+    		}
+    	}
+    	addError("Calling undeclared function " + node.getSourceInfo().toString());
+    }
     /**
      * Type check for ASTProgram nodes.
      */
     public void postVisit(ASTProgram node)
     {
-    	funcs = node.functions;
-    	vars = node.variables;
+    	funcs.addAll(node.functions);
+    	vars.addAll(node.variables);
     	
     	if (!checkForMain(funcs))
     	{
@@ -284,6 +298,9 @@ public class TypeCheck extends StaticAnalysis
     				addError("Arrays must only be declared in global scope");
     			}
     		}
+    		
+    		// check for duplicates within scope
+    		
     		return lookupSymbol(node, node.name).type;
     	} catch (InvalidProgramException e) {
     		addError("Symbol not found:  " + node.name);
@@ -306,16 +323,42 @@ public class TypeCheck extends StaticAnalysis
     }
 
     public ASTNode.DataType getType(ASTLiteral node) {
-    	System.out.println(node.type.toString());
     	return node.type;
     }
 
     public ASTNode.DataType getType(ASTFunctionCall node) {
     	try {
-    		 return lookupSymbol(node, node.name).type;
+    		checkParams(node.name, node.arguments);
+    		return lookupSymbol(node, node.name).type;
     	} catch (InvalidProgramException e) {
     		addError("Method not found:  " + node.name);
     		return null;
+    	}
+    }
+    
+    public void checkParams(String name, List<ASTExpression> args)
+    {
+    	for (ASTFunction f : funcs)
+    	{
+    		if (f.name.equals(name))
+    		{
+    			if (f.parameters.size() != args.size())
+    			{
+
+    				addError("Arguments do not match parameters for function " + f.getSourceInfo().toString());
+    			}
+    			else
+    			{
+    				for (int i = 0; i < f.parameters.size(); i++)
+    				{
+    					if (f.parameters.get(i).type != getType(args.get(i)))
+    					{
+
+    						addError("Arguments do not match parameters for function " + f.getSourceInfo().toString());
+    					}
+    				}
+    			}
+    		}
     	}
     }
     
@@ -332,7 +375,6 @@ public class TypeCheck extends StaticAnalysis
     	    		if(b.getParent() instanceof ASTWhileLoop)
     	    		{
     	    			return;
-    	    			//System.out.println("PARENT IS while");
 
     	    		}
     	    		else
