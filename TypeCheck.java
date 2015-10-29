@@ -73,26 +73,7 @@ public class TypeCheck extends StaticAnalysis
     {
     	int i = 0;
     	
-    	if(node.returnType == ASTNode.DataType.VOID)
-    	{
-    		ASTBlock b = node.body;
-    		for(ASTStatement s : b.statements)
-    		{
-    			if(s instanceof ASTReturn)
-    			{
-    				ASTReturn r = (ASTReturn)s;
-    				i++;
-    				
-    				if(i > 1)
-    				{
-    					addError("Function illegally contains multiple return statements " + node.returnType.toString());
-    				}
-    				addError("Function should have no return value " + r.getSourceInfo().toString());
-    			}
-    		}
-    	}
-    	else
-    	{
+
     		ASTBlock b = node.body;
     		for(ASTStatement s : b.statements)
     		{
@@ -106,15 +87,21 @@ public class TypeCheck extends StaticAnalysis
     							);
     				}
     				ASTReturn r = (ASTReturn)s;
-    				
-    				if(getType(r.value) != node.returnType)
+    				if(node.returnType == ASTNode.DataType.VOID)
+    				{
+    					if(r.hasValue())
+    					{
+    						addError("Illegal return statement for void function");
+    					}
+    				}
+    				else if(getType(r.value) != node.returnType)
     				{
     					addError("Function must return type " + node.returnType.toString()
     					+ " " + r.getSourceInfo().toString());
     				}
     			}
     		}
-    	}
+    	
     }
     
     /**
