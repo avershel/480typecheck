@@ -105,44 +105,41 @@ public class BuildSymbolTables extends StaticAnalysis
     {
     	node.annotations.put("symbolTable", initializeScope());
     }
-    
+
     public void postVisit(ASTProgram node)
     {
     	finalizeScope();
     }
-    
+
     public void preVisit(ASTVariable node)
     {
-
     	insertVariableSymbol(node);
     }
-    
+
     public void preVisit(ASTBlock node)
     {
     	node.annotations.put("symbolTable", initializeScope());
 
     }
-    
+
     public void postVisit(ASTBlock node)
     {
     	finalizeScope();
     }
-    
+
     public void preVisit(ASTFunction node)
     {
-    	node.annotations.put("symbolTable", initializeScope());
     	insertFunctionSymbol(node);
-
+    	node.annotations.put("symbolTable", initializeScope());
     	for(ASTFunction.Parameter p : node.parameters)
     	{
     		insertParamSymbol(p);
     	}
     }
-    
+
     public void postVisit(ASTFunction node)
     {
     	finalizeScope();
     }
 
-    
 }
