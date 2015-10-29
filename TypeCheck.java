@@ -37,7 +37,7 @@ public class TypeCheck extends StaticAnalysis
     public boolean checkForMain(List<ASTFunction> funcs)
     {
     	boolean main = false;
-    	
+
     	for (ASTFunction f : funcs)
     	{
     		if (f.name.equals("main"))
@@ -45,15 +45,15 @@ public class TypeCheck extends StaticAnalysis
     			main = true;
     			if (f.returnType != ASTNode.DataType.INT)
     			{
-    				if (!f.parameters.isEmpty())
-    				{
-    					addError("Main function cannot have parameters " + f.getSourceInfo().toString());
-    				}
     				addError("Main function must return type int " + f.getSourceInfo().toString());
     			}
+    			
+				if (!f.parameters.isEmpty())
+				{
+					addError("Main function cannot have parameters " + f.getSourceInfo().toString());
+				}
     		}
-    	}
-    	
+    	}    	 	
     	return main;
     }
     
@@ -139,16 +139,15 @@ public class TypeCheck extends StaticAnalysis
      */
     public ASTNode.DataType getType(ASTBinaryExpr ex)
     {
-
-
+    	System.out.println("In get type for binEx" + ex.toString());
     	if (getType(((ASTBinaryExpr)ex).leftChild) != getType(((ASTBinaryExpr)ex).rightChild))
     	{
-
+    		System.out.println("leftChild: " + (getType(((ASTBinaryExpr)ex).leftChild)).toString());
+    		System.out.println("leftChild: " + (getType(((ASTBinaryExpr)ex).rightChild)).toString());
     		addError("Values must be of same type " + ex.getSourceInfo().toString());
     	}
     	else if (boolOp(((ASTBinaryExpr)ex).operator))
     	{
-
     		return ASTNode.DataType.BOOL;
     	} else if (mathOp(((ASTBinaryExpr)ex).operator))
     	{
@@ -163,10 +162,8 @@ public class TypeCheck extends StaticAnalysis
      
     public ASTNode.DataType getType(ASTExpression ex)
     {
-
     	if(ex instanceof ASTBinaryExpr)
     	{
-
     		return getType((ASTBinaryExpr) ex);
     	}else if(ex instanceof ASTUnaryExpr)
     	{
@@ -183,7 +180,6 @@ public class TypeCheck extends StaticAnalysis
     	}else if(ex instanceof ASTLiteral)
     	{
     		return getType((ASTLiteral) ex);
-
     	}
     	else
     	{
@@ -191,8 +187,7 @@ public class TypeCheck extends StaticAnalysis
     		return null;
     	}
     }
-    
-    
+     
     public boolean mathOp(ASTBinaryExpr.BinOp b)
     {
     	return ((b == ASTBinaryExpr.BinOp.ADD) || (b == ASTBinaryExpr.BinOp.DIV) || (b == ASTBinaryExpr.BinOp.MOD)
@@ -228,11 +223,9 @@ public class TypeCheck extends StaticAnalysis
     
     public void postVisit(ASTAssignment node)
     {
-
     	ASTLocation loc = node.location;
     	ASTExpression ex = node.value;
-
-
+    	
     	if(getType(loc) != getType(ex))
     	{
     		addError("Must assign value of the same type " + node.getSourceInfo().toString());
@@ -244,7 +237,6 @@ public class TypeCheck extends StaticAnalysis
      */
     public void postVisit(ASTConditional node)
     {
-
     	if (getType(node.condition) != ASTNode.DataType.BOOL)
     	{
     		addError("Condtionals must test for boolean values " + node.condition.getSourceInfo().toString());
@@ -260,9 +252,7 @@ public class TypeCheck extends StaticAnalysis
     }
 
     public ASTNode.DataType getType(ASTLocation node) {
-
     	try {
-    		Symbol dt = lookupSymbol(node, node.name);
     		if(node.hasIndex())
     		{
     			if(getType(node.index) != ASTNode.DataType.INT)
@@ -281,10 +271,9 @@ public class TypeCheck extends StaticAnalysis
     			if(!vars.contains(new ASTVariable(node.name, lookupSymbol(node, node.name).type, lookupSymbol(node, node.name).length)))
     			{
     				addError("Arrays must only be declared in global scope");
-
     			}
     		}
-    		return dt.type;
+    		return lookupSymbol(node, node.name).type;
     	} catch (InvalidProgramException e) {
     		addError("Symbol not found:  " + node.name);
     		return null;
@@ -306,12 +295,13 @@ public class TypeCheck extends StaticAnalysis
     }
 
     public ASTNode.DataType getType(ASTLiteral node) {
+    	System.out.println(node.type.toString());
     	return node.type;
     }
 
     public ASTNode.DataType getType(ASTFunctionCall node) {
     	try {
-    		return lookupSymbol(node, node.name).type;
+    		 return lookupSymbol(node, node.name).type;
     	} catch (InvalidProgramException e) {
     		addError("Method not found:  " + node.name);
     		return null;
@@ -352,6 +342,43 @@ public class TypeCheck extends StaticAnalysis
 		else
 		{
 			addError("invalid break statement outside whileloop");
+		}
+    }
+    
+    public void postVisit(ASTContinue node)
+    {
+    	if (node.getParent() != null)
+    	{
+    		if(node.getParent() instanceof ASTBlock)
+    		{
+    			ASTNode b = node.getParent();
+    	    	if (b.getParent() != null)
+    	    	{
+
+    	    		if(b.getParent() instanceof ASTWhileLoop)
+    	    		{
+    	    			return;
+    	    			//System.out.println("PARENT IS while");
+
+    	    		}
+    	    		else
+    	    		{
+    	    			addError("invalid continue statement outside whileloop");
+    	    		}
+    	    	}
+	    		else
+	    		{
+	    			addError("invalid continue statement outside whileloop");
+	    		}
+    		}
+    		else
+    		{
+    			addError("invalid continue statement outside whileloop");
+    		}
+    	}
+		else
+		{
+			addError("invalid continue statement outside whileloop");
 		}
     }
 }
