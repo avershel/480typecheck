@@ -199,11 +199,11 @@ public class TypeCheck extends StaticAnalysis
 
     	}else if(ex instanceof ASTFunctionCall)
     	{
-
     		return getType((ASTFunctionCall) ex);
 
     	}else if(ex instanceof ASTLocation)
     	{
+    		// check index of ASTLocation
     		return getType((ASTLocation) ex);
 
     	}else if(ex instanceof ASTLiteral)
@@ -270,13 +270,36 @@ public class TypeCheck extends StaticAnalysis
     {
     	try 
     	{
+    		for(ASTVariable v: node.body.variables)
+    		{
+    			if(isArray(v))
+    			{
+    				addError("arrays may only be declared in global scope");
+    			}
+    		}
     		lookupSymbol(node, node.name);
     	} catch (InvalidProgramException ipe)
     	{
     		addError("Duplicate function names " + node.getSourceInfo().toString());
     	}
-    	
+
     	checkReturnTypes(node);
+    }
+    
+    /**
+     * Checks length of variable. If greater than 1
+     * return true, else return false.
+     * @param v is current ASTVariable node
+     * @return true if variable is an array
+     */
+    public boolean isArray(ASTVariable v)
+    {
+    	if(v.arrayLength > 1)
+    	{
+    		return true;
+
+    	}
+    	return false;
     }
     
     /**
@@ -339,17 +362,11 @@ public class TypeCheck extends StaticAnalysis
     				int length = lookupSymbol(node, node.name).length;
     				if(length <=0)
     				{
+    					
     					addError("Length of array must be greater than 0");
     				}
     			}
-
-    			if(!vars.contains(new ASTVariable(node.name, lookupSymbol(node, node.name).type, lookupSymbol(node, node.name).length)))
-    			{
-    				addError("Arrays must only be declared in global scope");
-    			}
     		}
-    		
-    		// check for duplicates within scope
     		
     		return lookupSymbol(node, node.name).type;
     	} catch (InvalidProgramException e) {
