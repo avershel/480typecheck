@@ -7,6 +7,8 @@ import java.util.ArrayList;
  * Static analysis; perform type checking.
  * 
  * Postvisit routines perform type checking using the Decaf type rules.
+ * @author Austing Vershel & Sam Carswell
+ * @version 29 October 2015
  */
 public class TypeCheck extends StaticAnalysis
 {
@@ -260,7 +262,7 @@ public class TypeCheck extends StaticAnalysis
     		addError("Program must contain a main function");
     	}
     }
-  
+      
     /**
      * Override ASTDefaultVisitor postVisit method.
      * Type checks function header statements.
@@ -350,11 +352,14 @@ public class TypeCheck extends StaticAnalysis
      * @return data type of location
      */
     public ASTNode.DataType getType(ASTLocation node) {
+    	System.out.println("in loc.... " + node.toString());
     	try {
     		if(node.hasIndex())
     		{
     			if(getType(node.index) != ASTNode.DataType.INT)
     			{
+    				System.out.println("adding error1 " + node.toString());
+
     				addError("Index of array must be of type INT");
     			}
     			else
@@ -362,19 +367,31 @@ public class TypeCheck extends StaticAnalysis
     				int length = lookupSymbol(node, node.name).length;
     				if(length <=0)
     				{
-    					
+    					System.out.println("adding 2 " + node.toString());
+
     					addError("Length of array must be greater than 0");
     				}
     			}
     		}
-    		
+    		else
+    		{
+    			Symbol s = lookupSymbol(node, node.name);
+    			if(s.length > 1)
+    			{
+    				addError("array must be followed by index");
+    			}
+    		}
+
+    		// check for duplicates within scope
+    		System.out.println("node = " + lookupSymbol(node, node.name).type);
     		return lookupSymbol(node, node.name).type;
     	} catch (InvalidProgramException e) {
+    		System.out.println("node = " + node.toString());
     		addError("Symbol not found:  " + node.name);
     		return null;
     	}
     }
-    
+
     /**
      * Type inferencing for unary expression.
      * @param node is current ASTUnaryExpr node
