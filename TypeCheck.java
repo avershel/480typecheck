@@ -213,7 +213,7 @@ public class TypeCheck extends StaticAnalysis
     	{
     		if (f.name.equals(node.name))
     		{
-    			checkParams(node.name, node.arguments);
+    			checkParams(f.parameters, node.arguments);
     			return;
     		}
     	}
@@ -226,6 +226,7 @@ public class TypeCheck extends StaticAnalysis
     {
     	funcs.addAll(node.functions);
     	vars.addAll(node.variables);
+    	System.out.println(funcs.size());
     	
     	if (!checkForMain(funcs))
     	{
@@ -328,36 +329,30 @@ public class TypeCheck extends StaticAnalysis
 
     public ASTNode.DataType getType(ASTFunctionCall node) {
     	try {
-    		checkParams(node.name, node.arguments);
-    		return lookupSymbol(node, node.name).type;
+    		for (ASTFunction f : funcs)
+    		{
+    			if (f.name.equals(node.name))
+    			{
+    				checkParams(f.parameters, node.arguments);
+    				return lookupSymbol(node, node.name).type;
+    			}
+    		}
+    		
     	} catch (InvalidProgramException e) {
     		addError("Method not found:  " + node.name);
     		return null;
+
     	}
+    	return null;
     }
     
-    public void checkParams(String name, List<ASTExpression> args)
+    public void checkParams(List<ASTFunction.Parameter> p, List<ASTExpression> args)
     {
-    	for (ASTFunction f : funcs)
+    	for (int i = 0; i < args.size(); i++)
     	{
-    		if (f.name.equals(name))
+    		if (p.get(i).type != getType(args.get(i)))
     		{
-    			if (f.parameters.size() != args.size())
-    			{
-
-    				addError("Arguments do not match parameters for function " + f.getSourceInfo().toString());
-    			}
-    			else
-    			{
-    				for (int i = 0; i < f.parameters.size(); i++)
-    				{
-    					if (f.parameters.get(i).type != getType(args.get(i)))
-    					{
-
-    						addError("Arguments do not match parameters for function " + f.getSourceInfo().toString());
-    					}
-    				}
-    			}
+    			addError("Arguments do not match parameters for function ");
     		}
     	}
     }
