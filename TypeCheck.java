@@ -14,7 +14,7 @@ public class TypeCheck extends StaticAnalysis
 	List<ASTVariable> vars = new ArrayList<ASTVariable>();
 	
     /**
-     * If operator should compute boolean result return
+     * If operator && or ||, should compute boolean result return
      * true, else return false;
      * 
      * @param b is binary operator
@@ -24,18 +24,29 @@ public class TypeCheck extends StaticAnalysis
 	{
 		return ((b == ASTBinaryExpr.BinOp.AND) || (b == ASTBinaryExpr.BinOp.OR));
 	}
-
+	
+	/**
+	 * If operator == or !=.
+	 * @param b
+	 * @return
+	 */
 	public boolean eqOp(ASTBinaryExpr.BinOp b)
 	{
 		return ((b == ASTBinaryExpr.BinOp.EQ) || (b == ASTBinaryExpr.BinOp.NE));
 	}
 
+	/**
+	 * If operator is <, >, =>, or <=.
+	 * @param b is binary operator
+	 * @return true if relational operator
+	 */
 	public boolean relOp(ASTBinaryExpr.BinOp b)
 	{
 		return ((b == ASTBinaryExpr.BinOp.GE) || (b == ASTBinaryExpr.BinOp.GT) || (b == ASTBinaryExpr.BinOp.LE)
 				|| (b == ASTBinaryExpr.BinOp.LT));
 	}
-    /**
+    
+	/**
      * Checks for main function in program. If main function exists
      * than checks it adheres to decaf rules.
      * @param funcs is ArrayList of ASTFunction nodes in ASTProgram
@@ -127,10 +138,10 @@ public class TypeCheck extends StaticAnalysis
     }
 
     /**
-     * Type inferencing.
+     * Type inferencing for Binary Expressions.
      * 
-     * @param ex
-     * @return
+     * @param ex is Binary Expression 
+     * @return data type computed by expression
      */
     public ASTNode.DataType getType(ASTBinaryExpr ex)
     {
@@ -171,9 +182,14 @@ public class TypeCheck extends StaticAnalysis
     	return null;
     }
     
+    /**
+     * Determines ASTExpression type and passes it
+     * to appropriate type inferencing method.
+     * @param ex is ASTExpression
+     * @return data type of ASTExpression ex
+     */
     public ASTNode.DataType getType(ASTExpression ex)
     {
-
     	if(ex instanceof ASTBinaryExpr)
     	{
     		return getType((ASTBinaryExpr) ex);
@@ -201,12 +217,21 @@ public class TypeCheck extends StaticAnalysis
     	}
     }
      
+    /**
+     * If operator is arithmetic operations.
+     * @return true if arthmetic operation
+     */
     public boolean mathOp(ASTBinaryExpr.BinOp b)
     {
     	return ((b == ASTBinaryExpr.BinOp.ADD) || (b == ASTBinaryExpr.BinOp.DIV) || (b == ASTBinaryExpr.BinOp.MOD)
     			|| (b == ASTBinaryExpr.BinOp.MUL) || (b == ASTBinaryExpr.BinOp.SUB));
     }
 
+    /**
+     * Overrides ASTDefaultVisitor postVisit method.
+     * Type checks void function call statements.
+     * @param node is current ASTVoidFunctionCall node
+     */
     public void postVisit(ASTVoidFunctionCall node)
     {
     	for (ASTFunction f : funcs)
@@ -219,14 +244,16 @@ public class TypeCheck extends StaticAnalysis
     	}
     	addError("Calling undeclared function " + node.getSourceInfo().toString());
     }
+   
     /**
+     * Overrides ASTDefaulyVisitor postVisit method.
      * Type check for ASTProgram nodes.
+     * @node is current ASTProgram node
      */
     public void postVisit(ASTProgram node)
     {
     	funcs.addAll(node.functions);
     	vars.addAll(node.variables);
-    	System.out.println(funcs.size());
     	
     	if (!checkForMain(funcs))
     	{
@@ -234,6 +261,11 @@ public class TypeCheck extends StaticAnalysis
     	}
     }
   
+    /**
+     * Override ASTDefaultVisitor postVisit method.
+     * Type checks function header statements.
+     * @node is current ASTFunction node
+     */
     public void postVisit(ASTFunction node)
     {
     	try 
@@ -247,6 +279,11 @@ public class TypeCheck extends StaticAnalysis
     	checkReturnTypes(node);
     }
     
+    /**
+     * Overrides ASTDefaultVisitor postVisit method.
+     * Type checks assignment statements.
+     * @param node is current ASTAssignment node
+     */
     public void postVisit(ASTAssignment node)
     {
     	ASTLocation loc = node.location;
@@ -259,7 +296,9 @@ public class TypeCheck extends StaticAnalysis
     }
     
     /**
-     * Type check for conditionals.
+     * Overrides ASTDefaultVisitor postVisit method.
+     * Type check for conditional statements.
+     * @node is current ASTConditional node
      */
     public void postVisit(ASTConditional node)
     {
@@ -269,6 +308,11 @@ public class TypeCheck extends StaticAnalysis
     	}
     }
     
+    /**
+     * Overrides ASTDefaultVisitor postVisit method.
+     * Type checks while statements.
+     * @node is current ASTWhileLoop node
+     */
     public void postVisit(ASTWhileLoop node)
     {
     	if (getType(node.guard) != ASTNode.DataType.BOOL)
@@ -277,6 +321,11 @@ public class TypeCheck extends StaticAnalysis
     	}
     }
 
+    /**
+     * Type inferencing for location expressions.
+     * @param node is current ASTLocation node
+     * @return data type of location
+     */
     public ASTNode.DataType getType(ASTLocation node) {
     	try {
     		if(node.hasIndex())
@@ -309,6 +358,11 @@ public class TypeCheck extends StaticAnalysis
     	}
     }
     
+    /**
+     * Type inferencing for unary expression.
+     * @param node is current ASTUnaryExpr node
+     * @return data type computed by expression
+     */
     public ASTNode.DataType getType(ASTUnaryExpr node) {
     	if (node.operator == ASTUnaryExpr.UnaryOp.NEG) {
     		if (getType(node.child) != ASTNode.DataType.INT) {
@@ -323,10 +377,20 @@ public class TypeCheck extends StaticAnalysis
     	return getType(node.child);
     }
 
+    /**
+     * Type inferencing for literals.
+     * @param node is current ASTLiteral node
+     * @return data type of literal
+     */
     public ASTNode.DataType getType(ASTLiteral node) {
     	return node.type;
     }
 
+    /**
+     * Type inferencing for function call expressions.
+     * @param node is ASTFunctionCall node
+     * @return data type computer by function call
+     */
     public ASTNode.DataType getType(ASTFunctionCall node) {
     	try {
     		for (ASTFunction f : funcs)
@@ -346,6 +410,12 @@ public class TypeCheck extends StaticAnalysis
     	return null;
     }
     
+    /**
+     * Check parameters of called function match arguments 
+     * in function call.
+     * @param p is list of parameters of called function
+     * @param args is list of arguments for function call expression
+     */
     public void checkParams(List<ASTFunction.Parameter> p, List<ASTExpression> args)
     {
     	for (int i = 0; i < args.size(); i++)
